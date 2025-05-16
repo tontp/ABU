@@ -17,7 +17,7 @@ const int Cylinder_Receive = 27;      // รับบอล    relay ch5
 // ชุดยิง cytron 20A ชุดยิง
 const int cytronPWM1 = 21;  //ledcWrite   channel 4
 const int cytronDIR1 = 22;
-const int cytronPWM2 = 23;  //ledcWrite   channel 4
+const int cytronPWM2 = 23;  //ledcWrite   channel 5
 const int cytronDIR2 = 2;
 
 int MAXPWM = 4095;
