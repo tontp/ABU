@@ -112,7 +112,7 @@ void Shooting(uint16_t brake, uint16_t throttle) {
       break;
   }
 
-  bool currentBrakeState = (brake == 1020);  // หรือแล้วแต่จอยส่งค่าอะไรตอนกด L2
+  bool currentBrakeState = (brake > 1000);  // หรือแล้วแต่จอยส่งค่าอะไรตอนกด L2
 
   if (currentBrakeState && !lastBrakeState) {
     level++;
@@ -150,6 +150,31 @@ void Shooting(uint16_t brake, uint16_t throttle) {
   ledcWrite(4, pwmVal1);
   ledcWrite(5, pwmVal1);
 }
+/*
+void testCytron() {
+  pinMode(cytronDIR1, OUTPUT);
+  digitalWrite(cytronDIR1, HIGH);  // หมุนไปข้างหน้า
+
+  ledcAttachPin(cytronPWM1, 4);
+  ledcSetup(4, 5000, 12);
+
+  Serial.println("Testing motor...");
+
+  ledcWrite(4, 1023);  // 25%
+  delay(2000);
+
+  ledcWrite(4, 2047);  // 50%
+  delay(2000);
+
+  ledcWrite(4, 3071);  // 75%
+  delay(2000);
+
+  ledcWrite(4, 4095);  // 100%
+  delay(2000);
+
+  ledcWrite(4, 0);  // Stop
+}
+*/
 
 int16_t readInt16() {
   uint16_t raw = UART_IN.read() << 8 | UART_IN.read();
@@ -192,7 +217,7 @@ void processUART() {
       Serial.print(dpad, HEX);
       Serial.print("\tButtons: ");
       Serial.println(buttons, HEX);
-
+      //testCytron();
       MOVE_MENT();
       Shooting(brake, throttle);
     }
