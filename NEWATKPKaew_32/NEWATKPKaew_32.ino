@@ -3,19 +3,19 @@ const int MAX_DUTY = 255;
 HardwareSerial UART_IN(1);  // UART1 RX=16, TX=17
 
 // Motor pins
-const int motorPWMPins[] = { 4, 14, 18, 17 }; //pwm1 , pwm2 , pwm3 , pwm4
-const int motorDIRPins[] = { 15, 12, 19, 5 }; //dir1 , dir2 , dir3 , dir4
+const int motorPWMPins[] = { 4, 14, 18, 17 };  //pwm1 , pwm2 , pwm3 , pwm4
+const int motorDIRPins[] = { 15, 12, 19, 5 };  //dir1 , dir2 , dir3 , dir4
 
 //relay Active HIGH
-const int linear_UP = 32;    // ปรับองศา relay ch 8
-const int linear_DOWN = 33;  // ปรับองศา relay ch 7
+const int linear_UP = 32;    // ปรับองศา relay ch 1
+const int linear_DOWN = 33;  // ปรับองศา relay ch 2
 
-const int Cylinder_PUSH = 25;         // ดันบอล relay ch6
-const int Cylinder_Bounce_ball = 26;  // เดาะบอล relay ch5
-const int Cylinder_Receive = 27;      // รับบอล relay ch4
+const int Cylinder_PUSH = 25;         // ดันบอล   relay ch3
+const int Cylinder_Bounce_ball = 26;  // เดาะบอล  relay ch4
+const int Cylinder_Receive = 27;      // รับบอล    relay ch5
 
 // ชุดยิง smile
-const int smile_ENA = 21;             //ledcWrite channel 4
+const int smile_ENA = 21;  //ledcWrite   channel 4
 const int smile_INT1 = 22;
 const int smile_INT2 = 23;
 
@@ -89,14 +89,20 @@ void MOVE_MENT() {
   driveMotor(motorPWMPins[3], motorDIRPins[3], m4, 3);
 }
 
-void Shooting(uint16_t brake,uint16_t throttle) {
+void Shooting(uint16_t brake, uint16_t throttle) {
   digitalWrite(linear_UP, LOW);
   digitalWrite(linear_DOWN, LOW);
   digitalWrite(Cylinder_PUSH, LOW);
-  digitalWrite(Cylinder_Receive, LOW);
+  //digitalWrite(Cylinder_Receive, LOW);
   digitalWrite(Cylinder_Bounce_ball, LOW);
+  static bool toggleCylinderReceive = false;
+  static bool lastButtonXState = false;
+  bool currentButtonXState = buttons & 0x04;
+  ledcWrite(4, pwmVal1);
+  digitalWrite(smile_INT1, HIGH);
+  digitalWrite(smile_INT2, LOW);
   switch (dpad) {
-    case 0x01:                       // Up = CW
+    case 0x01:                        // Up = CW
       digitalWrite(linear_UP, HIGH);  // ปรับองศา ขึ้น
       break;
     case 0x02:  // ปรับองศา ลง
@@ -112,14 +118,11 @@ void Shooting(uint16_t brake,uint16_t throttle) {
   }
 
   switch (level) {
-    case 0: pwmVal1 = 0;    break;     // 0%
+    case 0: pwmVal1 = 0; break;     // 0%
     case 1: pwmVal1 = 1023; break;  // 25%
     case 2: pwmVal1 = 2047; break;  // 50%
     case 3: pwmVal1 = 3071; break;  // 75%
     case 4: pwmVal1 = 4095; break;  // 100%
-      ledcWrite(4, pwmVal1);
-      digitalWrite(smile_INT1, HIGH);
-      digitalWrite(smile_INT2, LOW);
   }
   switch (throttle) {
     case 1020:
@@ -131,13 +134,15 @@ void Shooting(uint16_t brake,uint16_t throttle) {
     case 0x01:
       digitalWrite(Cylinder_Bounce_ball, HIGH);
       break;
-    case 0x04:
-      digitalWrite(Cylinder_Receive, HIGH);
-      break;
     case 0x02:
       pwmVal1 = 0;
       break;
   }
+  if (currentButtonXState && !lastButtonXState) {
+    toggleCylinderReceive = !toggleCylinderReceive;
+    digitalWrite(Cylinder_Receive, toggleCylinderReceive ? HIGH : LOW);
+  }
+  lastButtonXState = currentButtonXState;
 }
 
 int16_t readInt16() {
@@ -178,7 +183,7 @@ void processUART() {
       Serial.println(buttons, HEX);
 
       MOVE_MENT();
-      Shooting(brake,throttle);
+      Shooting(brake, throttle);
     }
   }
 }
