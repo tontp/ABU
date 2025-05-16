@@ -14,10 +14,11 @@ const int Cylinder_PUSH = 25;         // ดันบอล   relay ch3
 const int Cylinder_Bounce_ball = 26;  // เดาะบอล  relay ch4
 const int Cylinder_Receive = 27;      // รับบอล    relay ch5
 
-// ชุดยิง smile
-const int smile_ENA = 21;  //ledcWrite   channel 4
-const int smile_INT1 = 22;
-const int smile_INT2 = 23;
+// ชุดยิง cytron 20A ชุดยิง
+const int cytronPWM1 = 21;  //ledcWrite   channel 4
+const int cytronDIR1 = 22;
+const int cytronPWM2 = 23;  //ledcWrite   channel 4
+const int cytronDIR2 = 2;
 
 int MAXPWM = 4095;
 int MINPWM = 0;
@@ -96,8 +97,8 @@ void Shooting(uint16_t brake, uint16_t throttle) {
   digitalWrite(linear_DOWN, LOW);
   digitalWrite(Cylinder_PUSH, LOW);
   digitalWrite(Cylinder_Bounce_ball, LOW);
-  digitalWrite(smile_INT1, HIGH);
-  digitalWrite(smile_INT2, LOW);
+  digitalWrite(cytronDIR1, LOW);
+  digitalWrite(cytronDIR2, LOW);
   static bool toggleCylinderReceive = false;
   static bool lastButtonXState = false;
   bool currentButtonXState = buttons & 0x04;
@@ -121,8 +122,8 @@ void Shooting(uint16_t brake, uint16_t throttle) {
 
 
   switch (level) {
-    case 0: pwmVal1 = 0; break;    // 0%
-    case 1: pwmVal1 = 1023; break;   // 25% 64
+    case 0: pwmVal1 = 0; break;     // 0%
+    case 1: pwmVal1 = 1023; break;  // 25% 64
     case 2: pwmVal1 = 2046; break;  // 50% 128
     case 3: pwmVal1 = 3092; break;  // 75% 191
     case 4: pwmVal1 = 4095; break;  // 100% 255
@@ -147,6 +148,7 @@ void Shooting(uint16_t brake, uint16_t throttle) {
   }
   lastButtonXState = currentButtonXState;
   ledcWrite(4, pwmVal1);
+  ledcWrite(5, pwmVal1);
 }
 
 int16_t readInt16() {
@@ -211,8 +213,10 @@ void setup() {
   }
 
   // Shooting setup
-  ledcAttachPin(smile_ENA, 4);
+  ledcAttachPin(cytronPWM1, 4);
   ledcSetup(4, 5000, 12);  // Channel 4 for smile_ENA
+  ledcAttachPin(cytronPWM2, 5);
+  ledcSetup(5, 5000, 12);  // Channel 4 for smile_ENA
 
   // Defender setup
   pinMode(linear_UP, OUTPUT);
@@ -220,8 +224,8 @@ void setup() {
   pinMode(Cylinder_PUSH, OUTPUT);
   pinMode(Cylinder_Bounce_ball, OUTPUT);
   pinMode(Cylinder_Receive, OUTPUT);
-  pinMode(smile_INT1, OUTPUT);
-  pinMode(smile_INT2, OUTPUT);
+  pinMode(cytronDIR1, OUTPUT);
+  pinMode(cytronDIR2, OUTPUT);
 }
 
 
