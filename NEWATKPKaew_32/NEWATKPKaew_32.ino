@@ -1,4 +1,4 @@
-const int MAX_DUTY = 255;
+const int MAX_DUTY = 4095;
 
 HardwareSerial UART_IN(1);  // UART1 RX=16, TX=17
 
@@ -23,6 +23,8 @@ int MAXPWM = 4095;
 int MINPWM = 0;
 int pwmVal1 = 0;
 int level = 0;
+
+bool lastBrakeState = false;
 
 int16_t lx, ly, rx;
 uint16_t dpad, buttons;
@@ -93,14 +95,13 @@ void Shooting(uint16_t brake, uint16_t throttle) {
   digitalWrite(linear_UP, LOW);
   digitalWrite(linear_DOWN, LOW);
   digitalWrite(Cylinder_PUSH, LOW);
-  //digitalWrite(Cylinder_Receive, LOW);
   digitalWrite(Cylinder_Bounce_ball, LOW);
+  digitalWrite(smile_INT1, HIGH);
+  digitalWrite(smile_INT2, LOW);
   static bool toggleCylinderReceive = false;
   static bool lastButtonXState = false;
   bool currentButtonXState = buttons & 0x04;
-  ledcWrite(4, pwmVal1);
-  digitalWrite(smile_INT1, HIGH);
-  digitalWrite(smile_INT2, LOW);
+
   switch (dpad) {
     case 0x01:                        // Up = CW
       digitalWrite(linear_UP, HIGH);  // ปรับองศา ขึ้น
@@ -110,39 +111,42 @@ void Shooting(uint16_t brake, uint16_t throttle) {
       break;
   }
 
-  if (brake == 1020) {
-    level += 1;
+  bool currentBrakeState = (brake == 1020);  // หรือแล้วแต่จอยส่งค่าอะไรตอนกด L2
+
+  if (currentBrakeState && !lastBrakeState) {
+    level++;
+    if (level > 4) level = 0;
   }
-  if (level > 4) {
-    level = 0;
-  }
+  lastBrakeState = currentBrakeState;
+
 
   switch (level) {
-    case 0: pwmVal1 = 0; break;     // 0%
-    case 1: pwmVal1 = 1023; break;  // 25%
-    case 2: pwmVal1 = 2047; break;  // 50%
-    case 3: pwmVal1 = 3071; break;  // 75%
-    case 4: pwmVal1 = 4095; break;  // 100%
+    case 0: pwmVal1 = 0; break;    // 0%
+    case 1: pwmVal1 = 1023; break;   // 25% 64
+    case 2: pwmVal1 = 2046; break;  // 50% 128
+    case 3: pwmVal1 = 3092; break;  // 75% 191
+    case 4: pwmVal1 = 4095; break;  // 100% 255
   }
+
   switch (throttle) {
     case 1020:
       digitalWrite(Cylinder_PUSH, HIGH);
       break;
   }
 
-  switch (buttons) {
-    case 0x01:
-      digitalWrite(Cylinder_Bounce_ball, HIGH);
-      break;
-    case 0x02:
-      pwmVal1 = 0;
-      break;
+  if (buttons & 0x01) {
+    digitalWrite(Cylinder_Bounce_ball, HIGH);
   }
+  if (buttons & 0x02) {
+    level = 0;
+  }
+
   if (currentButtonXState && !lastButtonXState) {
     toggleCylinderReceive = !toggleCylinderReceive;
     digitalWrite(Cylinder_Receive, toggleCylinderReceive ? HIGH : LOW);
   }
   lastButtonXState = currentButtonXState;
+  ledcWrite(4, pwmVal1);
 }
 
 int16_t readInt16() {
@@ -167,6 +171,11 @@ void processUART() {
       buttons |= (uint32_t)UART_IN.read() << 8;
       buttons |= (uint32_t)UART_IN.read();
       // 🔍 Debug
+      Serial.print("Level: ");
+      Serial.print(level);
+      Serial.print("  PWM: ");
+      Serial.println(pwmVal1);
+
       Serial.print("LX: ");
       Serial.print(lx);
       Serial.print("\tLY: ");
@@ -196,15 +205,14 @@ void setup() {
   // Motor setup
   for (int i = 0; i < 4; i++) {
     pinMode(motorDIRPins[i], OUTPUT);
-    ledcSetup(i, 5000, 8);
+    ledcSetup(i, 5000, 12);
     ledcAttachPin(motorPWMPins[i], i);
     ledcWrite(i, 0);  // Clear PWM เริ่มต้น
   }
 
   // Shooting setup
-  ledcSetup(4, 5000, 12);  // Channel 4 for smile_ENA
   ledcAttachPin(smile_ENA, 4);
-
+  ledcSetup(4, 5000, 12);  // Channel 4 for smile_ENA
 
   // Defender setup
   pinMode(linear_UP, OUTPUT);
@@ -212,7 +220,6 @@ void setup() {
   pinMode(Cylinder_PUSH, OUTPUT);
   pinMode(Cylinder_Bounce_ball, OUTPUT);
   pinMode(Cylinder_Receive, OUTPUT);
-  pinMode(smile_ENA, OUTPUT);
   pinMode(smile_INT1, OUTPUT);
   pinMode(smile_INT2, OUTPUT);
 }
