@@ -101,7 +101,7 @@ void Shooting(uint16_t brake, uint16_t throttle) {
   digitalWrite(cytronDIR2, LOW);
   static bool toggleCylinderReceive = false;
   static bool lastButtonXState = false;
-  bool currentButtonXState = buttons & 0x04;
+  bool currentButtonXState = buttons & 0x01;
 
   switch (dpad) {
     case 0x01:                        // Up = CW
@@ -135,7 +135,7 @@ void Shooting(uint16_t brake, uint16_t throttle) {
       break;
   }
 
-  if (buttons & 0x01) {
+  if (buttons & 0x04) {
     digitalWrite(Cylinder_Bounce_ball, HIGH);
   }
   if (buttons & 0x02) {
