@@ -3,11 +3,11 @@ const int MAX_DUTY = 255;
 HardwareSerial UART_IN(1);  // UART1 RX=16, TX=17
 
 // Motor pins
-const int motorPWMPins[] = { 4, 14, 18, 17 };
-const int motorDIRPins[] = { 15, 12, 19, 5 };
+const int motorPWMPins[] = { 12, 27, 18, 17 };
+const int motorDIRPins[] = { 13, 14, 19, 5 };
 // const int DEF_PWM = 32;
-const int DEF_CW = 32;
-const int DEF_CCW = 33;
+const int DEF_CW = 25;
+const int DEF_CCW = 26;
 
 int16_t lx, ly, rx;
 uint16_t dpad, buttons;
